@@ -118,6 +118,29 @@ class World:
         for x, y in candidates[:num_cars]:
             self.grid[x][y].car = Car(x, y, self)
 
+    def display(self, show_orientation=False):
+        """Print the grid representation of the world, showing highways, cars, and highway orientations."""
+        for y in range(self.grid_size - 1, -1, -1):
+            row = ""
+            for x in range(self.grid_size):
+                cell = self.grid[x][y]
+                if (x, y) == self.start:
+                    row += "S "
+                elif (x, y) == self.goal:
+                    row += "G "
+                elif cell.isHighway:
+                    if show_orientation and cell.highway:
+                        row += "- " if cell.highway.orientation == "horizontal" else "| "
+                    else:
+                        row += "H "
+                elif cell.car is not None:
+                    row += "C "
+                else:
+                    row += ". "
+            print(row)
+        if show_orientation:
+            print("\nLegend: S=Start G=Goal -=H.Highway |=V.Highway C=Car .=Empty")
+
     def get_highway_stats(self):
         """Calculate and return statistics about the highways and cars in the world."""
         h = v = cars = 0

@@ -187,3 +187,8 @@ class CarEnv(gym.Env):
     def _in_bounds(self, x, y):
         """Check if the given coordinates are within the bounds of the grid."""
         return 0 <= x < self.grid_size and 0 <= y < self.grid_size
+
+    @property
+    def agent_pos(self):
+        """Return the current position of the agent in the grid as a tuple (grid_x, grid_y)."""
+        return (self.grid_x, self.grid_y)

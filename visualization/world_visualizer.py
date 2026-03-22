@@ -232,10 +232,3 @@ class WorldVisualizer:
     def close(self):
         """Close the visualization window."""
         plt.close(self.fig)
-
-def main():
-    world = World(grid_size=20, num_branches=15, max_length=15, num_cars=30)
-    viz   = WorldVisualizer(world)
-    viz.show()
-
-if __name__ == "__main__":    main()
