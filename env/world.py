@@ -5,13 +5,11 @@ from .car import Car
 
 
 class World:
-    """
-    Represents the grid environment with highways and cars. The world is initialized with a specified grid size, number of highway branches, maximum branch length, and number of cars.
-    """
-    def __init__(self, grid_size, num_branches, max_length, num_cars=5, highway_max_cars=4):
-        """Initialize the world with highways and cars."""
+    def __init__(self, grid_size, num_branches, max_length,
+                 num_cars=5, highway_max_cars=4):
         self.grid_size = grid_size
-        self.grid = [[Cell(x, y) for y in range(grid_size)] for x in range(grid_size)] # Create grid of Cell objects
+        self.grid  = [[Cell(x, y) for y in range(grid_size)]
+                                  for x in range(grid_size)]
         self.start = (0, 0)
         self.goal = (grid_size - 1, grid_size - 1)
         self.highway_max_cars = highway_max_cars
@@ -19,20 +17,66 @@ class World:
         self._add_cars(num_cars=num_cars)
 
     def create_highways(self, num_branches=5, max_length=4):
-        """Create the main highway path and add branches, then build connections and configure highway grids."""
         self._create_main_path()
+        self._seed_diagonal_highways()   # Force highways into the agent's path
         self._add_branches(num_branches=num_branches, max_length=max_length)
         self._build_connections()
         self._create_highway_grids()
         self._configure_terminal_cells()
 
+    def _seed_diagonal_highways(self):
+        """
+        Place highway seed cells along the diagonal between
+        start and goal so the agent's shortest path is forced to
+        encounter highway cells regardless of random branch placement.
+        Seeds every 3rd cell along several monotone paths through
+        the grid centre.
+        """
+        gs = self.grid_size
+        # Walk three slightly different monotone paths across the grid
+        # and mark every 3rd cell as a highway seed
+        paths = [
+            self._monotone_path((0, 0), (gs-1, gs-1), jitter=0),
+            self._monotone_path((0, 0), (gs-1, gs-1), jitter=1),
+            self._monotone_path((0, 0), (gs-1, gs-1), jitter=-1),
+        ]
+        for path in paths:
+            for i, (x, y) in enumerate(path):
+                # Skip start and goal, they are handled separately
+                if (x, y) in (self.start, self.goal):
+                    continue
+                if i % 3 == 0:
+                    self.grid[x][y].isHighway = True
+
+    def _monotone_path(self, start, goal, jitter=0):
+        """
+        Generate a deterministic monotone path from start to goal.
+        jitter shifts the balance between right/up steps to create
+        path variety: 0=balanced, 1=right-heavy, -1=up-heavy.
+        """
+        path = []
+        x, y = start
+        gx, gy = goal
+        while (x, y) != (gx, gy):
+            path.append((x, y))
+            can_right = x < gx
+            can_up    = y < gy
+            if can_right and can_up:
+                # jitter biases which direction we prefer
+                go_right = (len(path) + jitter) % 2 == 0
+                x, y = (x+1, y) if go_right else (x, y+1)
+            elif can_right:
+                x += 1
+            else:
+                y += 1
+        path.append((gx, gy))
+        return path
+
     def _configure_terminal_cells(self):
-        """Ensure start and goal cells are highways and have no cars."""
         for x, y in (self.start, self.goal):
             self.grid[x][y].highway = None
 
     def _create_main_path(self):
-        """Create the main highway path from start to goal by randomly going down or right."""
         x, y = self.start
         self.grid[x][y].isHighway = True
         while (x, y) != self.goal:
@@ -48,7 +92,6 @@ class World:
             x, y = nx, ny
 
     def _add_branches(self, num_branches, max_length):
-        """Add branches to the main highway path while ensuring they do not create fully blocked rows or columns."""
         highway_cells = [
             (x, y)
             for x in range(self.grid_size)
@@ -74,7 +117,6 @@ class World:
                     break
 
     def _build_connections(self):
-        """Build connections between adjacent highway cells for pathfinding and orientation determination."""
         directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
         for x in range(self.grid_size):
             for y in range(self.grid_size):
@@ -88,7 +130,6 @@ class World:
                             cell.connections.append((nx, ny))
 
     def _create_highway_grids(self):
-        """Create Highway objects for each highway cell based on their connections to determine orientation and car placement."""
         for x in range(self.grid_size):
             for y in range(self.grid_size):
                 cell = self.grid[x][y]
@@ -100,13 +141,11 @@ class World:
                     )
 
     def _determine_orientation(self, x, y, connections):
-        """Determine the orientation of a highway cell based on its connections."""
         horizontal = sum(1 for nx, ny in connections if ny == y)
         vertical   = sum(1 for nx, ny in connections if nx == x)
         return "vertical" if vertical > horizontal else "horizontal"
 
     def _add_cars(self, num_cars):
-        """Randomly place cars in non-highway cells while ensuring start and goal cells are not occupied."""
         candidates = [
             (x, y)
             for x in range(self.grid_size)
@@ -119,7 +158,6 @@ class World:
             self.grid[x][y].car = Car(x, y, self)
 
     def display(self, show_orientation=False):
-        """Print the grid representation of the world, showing highways, cars, and highway orientations."""
         for y in range(self.grid_size - 1, -1, -1):
             row = ""
             for x in range(self.grid_size):
@@ -142,7 +180,6 @@ class World:
             print("\nLegend: S=Start G=Goal -=H.Highway |=V.Highway C=Car .=Empty")
 
     def get_highway_stats(self):
-        """Calculate and return statistics about the highways and cars in the world."""
         h = v = cars = 0
         for x in range(self.grid_size):
             for y in range(self.grid_size):
