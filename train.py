@@ -7,10 +7,13 @@ from env import CarEnv
 from agent import Agent
 from visualization import WorldVisualizer
 
-AGENT_SAVE_PATH  = os.path.join("outputs", "saved_agent")
-REWARD_HIST_PATH = os.path.join("outputs", "reward_history.npy")
-PHASE1_END_PATH  = os.path.join("outputs", "phase1_end.npy")
-CURVES_PATH      = os.path.join("outputs", "training_curves.png")
+OUTPUT_DIR      = "outputs/training"
+
+AGENT_SAVE_PATH  = os.path.join(OUTPUT_DIR, "saved_agent")
+# AGENT_SAVE_PATH  = "outputs/oprimization/best_agent"
+REWARD_HIST_PATH = os.path.join(OUTPUT_DIR, "reward_history.npy")
+PHASE1_END_PATH  = os.path.join(OUTPUT_DIR, "phase1_end.npy")
+CURVES_PATH      = os.path.join(OUTPUT_DIR, "training_curves.png")
 
 PHASE1_EPISODES  = 5000   # More episodes needed for larger grid
 PHASE2_EPISODES  = 2000
@@ -24,7 +27,7 @@ ENV_KWARGS_BASE = dict(
     num_cars=12,  highway_max_cars=3, max_steps=400,
 )
 
-os.makedirs("outputs", exist_ok=True)
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 env_fixed  = CarEnv(**ENV_KWARGS_BASE, fixed_world=True)
 env_random = CarEnv(**ENV_KWARGS_BASE, fixed_world=False)
